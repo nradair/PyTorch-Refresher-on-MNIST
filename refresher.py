@@ -139,8 +139,9 @@ class LSTM(nn.Module):
         return probs
 
     def init_hidden(self, batch_size=200):
-        """ Taken from https://blog.floydhub.com/long-short-term-memory-from-zero-to-hero-with-pytorch/
-            will not function with other batch sizes.
+        """
+        Taken from https://blog.floydhub.com/long-short-term-memory-from-zero-to-hero-with-pytorch/
+        will not function with other batch sizes.
         """
         weight = next(self.parameters()).data
         hidden = weight.new(weight.new(self.n_layers, batch_size, 512).zero_())
