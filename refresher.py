@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.optim import Adam, SGD
 from torch.utils.data import DataLoader
+from torch.autograd import Variable
 from torchvision import datasets
 from torchvision.transforms import ToTensor, Lambda, Compose
 
@@ -127,8 +128,10 @@ class LSTM(nn.Module):
         self.dropout = nn.Dropout()
         self.activation = nn.ReLU()
 
-    def forward(self, input, hidden):
-        out, hidden = self.lstm(input, hidden)
+    def forward(self, input):
+        h_0 = Variable(torch.rand(self.n_layers, input.size(0), 512))
+        c_0 = Variable(torch.rand(self.n_layers,  input.size(0), 512))
+        out, hidden = self.lstm(input, (h_0, c_0))
         out = self.dropout(hidden[0][0])
         out = self.activation(out)
         out = self.fc1(out)
@@ -137,16 +140,6 @@ class LSTM(nn.Module):
         logits = self.activation(out)
         probs = F.softmax(logits, dim=1)
         return probs
-
-    def init_hidden(self, batch_size=200):
-        """
-        Taken from https://blog.floydhub.com/long-short-term-memory-from-zero-to-hero-with-pytorch/
-        will not function with other batch sizes.
-        """
-        weight = next(self.parameters()).data
-        hidden = weight.new(weight.new(self.n_layers, batch_size, 512).zero_())
-        cell = weight.new(weight.new(self.n_layers, batch_size, 512).zero_())
-        return (hidden, cell)
 
 
 def split_seconds(seconds):
@@ -193,7 +186,6 @@ def main():
     start = time.time()
     if train_model:
         # LSTM hidden layer
-        hidden = model.init_hidden()
         for epoch in tqdm(range(num_epochs)):
             total_loss = 0
             for image, label in tqdm(data.train, leave=False):
@@ -202,7 +194,7 @@ def main():
                 # CNN
                 # probabilities = model(image)
                 # LSTM
-                probabilities = model(image, hidden)
+                probabilities = model(image)
                 loss = loss_fn(probabilities, label)
                 loss.backward()
                 optimizer.step()
@@ -226,9 +218,8 @@ def main():
     num_test = 0
     num_correct = 0
     for image, label in tqdm(data.test):
-        hidden = model.init_hidden()
         image, label = image.to(device), label.to(device)
-        probabilities = model(image, hidden)
+        probabilities = model(image)
         _, pred = probabilities.max(1)
         num_test += label.size(0)
         num_correct += pred.eq(label).sum().item()
