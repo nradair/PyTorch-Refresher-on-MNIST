@@ -225,8 +225,9 @@ def main():
     num_test = 0
     num_correct = 0
     for image, label in tqdm(data.test):
+        hidden = model.init_hidden()
         image, label = image.to(device), label.to(device)
-        probabilities = model(image)
+        probabilities = model(image, hidden)
         _, pred = probabilities.max(1)
         num_test += label.size(0)
         num_correct += pred.eq(label).sum().item()
