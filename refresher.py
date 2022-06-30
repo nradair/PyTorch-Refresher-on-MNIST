@@ -168,6 +168,7 @@ def main():
     # Cuda setup
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model.to(device)
+    print(device)
 
     # Optimizer setup
     optimizer = Adam(model.parameters(), lr=1e-3)
