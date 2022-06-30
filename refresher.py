@@ -128,9 +128,9 @@ class LSTM(nn.Module):
         self.dropout = nn.Dropout()
         self.activation = nn.ReLU()
 
-    def forward(self, input):
-        h_0 = Variable(torch.rand(self.n_layers, input.size(0), 512))
-        c_0 = Variable(torch.rand(self.n_layers,  input.size(0), 512))
+    def forward(self, input, device):
+        h_0 = Variable(torch.rand(self.n_layers, input.size(0), 512)).to(device)
+        c_0 = Variable(torch.rand(self.n_layers,  input.size(0), 512)).to(device)
         out, hidden = self.lstm(input, (h_0, c_0))
         out = self.dropout(hidden[0][0])
         out = self.activation(out)
@@ -194,7 +194,7 @@ def main():
                 # CNN
                 # probabilities = model(image)
                 # LSTM
-                probabilities = model(image)
+                probabilities = model(image, device)
                 loss = loss_fn(probabilities, label)
                 loss.backward()
                 optimizer.step()
@@ -219,7 +219,7 @@ def main():
     num_correct = 0
     for image, label in tqdm(data.test):
         image, label = image.to(device), label.to(device)
-        probabilities = model(image)
+        probabilities = model(image, device)
         _, pred = probabilities.max(1)
         num_test += label.size(0)
         num_correct += pred.eq(label).sum().item()
